@@ -39,15 +39,16 @@ After 11 days 200 billion coins will be automatically distributed equally amongs
 
 ## Development & Care Fund
 
-> 100 billion coins will be added to development and care fund.
-> Linear vesting for 2 years.
+- 100 billion coins will be added to development and care fund.
+
+- Linear vesting for 2 years.
 
 ## Website
 
-> WHITELIST tool for first 11 days.
-> Tracker whitelisters.
-> Automated distribution tool for airdrop tokens.
-> Purchase tool(connected with DEX) for next 100 billion coins.
-> Tracker token holders after 11 days, whitelisters become token holders.
-> Tracker coins in the development & Care fund.
-> Tracker live pricing.
+- WHITELIST tool for first 11 days.
+- Tracker whitelisters.
+- Automated distribution tool for airdrop tokens.
+- Purchase tool(connected with DEX) for next 100 billion coins.
+- Tracker token holders after 11 days, whitelisters become token holders.
+- Tracker coins in the development & Care fund.
+- Tracker live pricing.

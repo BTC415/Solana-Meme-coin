@@ -1,107 +1,101 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, TokenAccount};
+use anchor_spl::token::{self, Token, TokenAccount};
 use std::collections::HashSet;
 
-declare_id!("YOUR_PROGRAM_ID"); // Replace with your program ID
-
-#[account]
-pub struct AirdropState {
-    pub total_tokens: u64,
-    pub distributed_tokens: u64,
-    pub distribution_time: i64,
-    pub whitelisted: HashSet<Pubkey>, // Track whitelisted addresses
-}
+declare_id!("YOUR_PROGRAM_ID");
 
 #[program]
 pub mod airdrop {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, total_tokens: u64) -> Result<()> {
-        let state = &mut ctx.accounts.state;
-        state.total_tokens = total_tokens; // Total airdrop tokens (200 billion)
-        state.distributed_tokens = 0; // Initially no tokens distributed
-        state.distribution_time = Clock::get()?.unix_timestamp + 11 * 24 * 60 * 60; // Set distribution time to 11 days from now
-        state.whitelisted = HashSet::new(); // Initialize empty whitelist
+    pub fn initialize(ctx: Context<Initialize>, start_time: i64, duration: i64) -> Result<()> {
+        let airdrop_account = &mut ctx.accounts.airdrop_account;
+        airdrop_account.start_time = start_time;
+        airdrop_account.end_time = start_time + duration;
+        airdrop_account.total_tokens = 200_000_000_000;
+        airdrop_account.distributed_tokens = 0;
+        airdrop_account.whitelisted = HashSet::new();
         Ok(())
     }
 
     pub fn whitelist_user(ctx: Context<WhitelistUser>) -> Result<()> {
-        let state = &mut ctx.accounts.state;
-        state.whitelisted.insert(ctx.accounts.user.key()); // Mark user as whitelisted
+        let airdrop_account = &mut ctx.accounts.airdrop_account;
+        airdrop_account.whitelisted.insert(ctx.accounts.user.key());
         Ok(())
     }
 
-    pub fn distribute_airdrop(ctx: Context<DistributeAirdrop>, amount: u64) -> Result<()> {
-        let state = &mut ctx.accounts.state;
-
-        // Ensure the distribution time has passed
-        let current_time = Clock::get()?.unix_timestamp;
-        if current_time < state.distribution_time {
-            return Err(ErrorCode::DistributionNotReady.into());
+    pub fn distribute_airdrop(ctx: Context<DistributeAirdrop>) -> Result<()> {
+        let airdrop_account = &mut ctx.accounts.airdrop_account;
+        let clock = Clock::get()?;
+        
+        if clock.unix_timestamp < airdrop_account.end_time {
+            return Err(ErrorCode::AirdropNotEnded.into());
         }
 
-        // Ensure the recipient is whitelisted
-        if !state.whitelisted.contains(&ctx.accounts.recipient.owner) {
+        if !airdrop_account.whitelisted.contains(&ctx.accounts.recipient.key()) {
             return Err(ErrorCode::NotWhitelisted.into());
         }
 
-        // Calculate the total number of whitelisted users
-        let num_users = state.whitelisted.len() as u64;
-        if num_users == 0 {
-            return Err(ErrorCode::NoWhitelistedUsers.into());
-        }
-
-        // Calculate tokens per user
-        let tokens_per_user = state.total_tokens / num_users;
-
-        // Transfer tokens to the recipient
+        let tokens_per_user = airdrop_account.total_tokens / airdrop_account.whitelisted.len() as u64;
+        
         token::transfer(
-            ctx.accounts.into_transfer_context(),
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::Transfer {
+                    from: ctx.accounts.airdrop_token_account.to_account_info(),
+                    to: ctx.accounts.recipient_token_account.to_account_info(),
+                    authority: ctx.accounts.authority.to_account_info(),
+                },
+            ),
             tokens_per_user,
         )?;
 
-        // Update distributed tokens
-        state.distributed_tokens += tokens_per_user;
-
+        airdrop_account.distributed_tokens += tokens_per_user;
         Ok(())
-    }
-
-    impl<'info> DistributeAirdrop<'info> {
-        fn into_transfer_context(self) -> CpiContext<'_, '_, '_, 'info, token::Transfer<'info>> {
-            let cpi_accounts = token::Transfer {
-                from: ctx.accounts.state.to_account_info(),
-                to: self.recipient.to_account_info(),
-                authority: self.authority.to_account_info(),
-            };
-            CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
-        }
     }
 }
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, payer = user, space = 8 + 32)] // Adjust space as needed
-    pub state: Account<'info, AirdropState>,
+    #[account(init, payer = authority, space = 8 + 16 + 16 + 16 + 16 + 32 * 1000)] // Adjust space as needed
+    pub airdrop_account: Account<'info, AirdropAccount>,
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct WhitelistUser<'info> {
     #[account(mut)]
-    pub state: Account<'info, AirdropState>,
-    #[account(mut)]
+    pub airdrop_account: Account<'info, AirdropAccount>,
     pub user: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct DistributeAirdrop<'info> {
     #[account(mut)]
-    pub state: Account<'info, AirdropState>,
+    pub airdrop_account: Account<'info, AirdropAccount>,
     #[account(mut)]
-    pub recipient: Account<'info, TokenAccount>,
-    pub mint: Account<'info, Mint>,
+    pub airdrop_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub authority: Signer<'info>, // Authority to distribute airdrop
+    pub recipient_token_account: Account<'info, TokenAccount>,
+    pub authority: Signer<'info>,
+    pub token_program: Program<'info, Token>,
+}
+
+#[account]
+pub struct AirdropAccount {
+    pub start_time: i64,
+    pub end_time: i64,
+    pub total_tokens: u64,
+    pub distributed_tokens: u64,
+    pub whitelisted: HashSet<Pubkey>,
+}
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Airdrop has not ended yet")]
+    AirdropNotEnded,
+    #[msg("User is not whitelisted")]
+    NotWhitelisted,
 }

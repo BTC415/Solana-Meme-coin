@@ -10,11 +10,11 @@ pub mod airdrop {
 
     pub fn initialize(ctx: Context<Initialize>, start_time: i64, duration: i64) -> Result<()> {
         let airdrop_account = &mut ctx.accounts.airdrop_account;
-        airdrop_account.start_time = start_time;
-        airdrop_account.end_time = start_time + duration;
-        airdrop_account.total_tokens = 200_000_000_000;
-        airdrop_account.distributed_tokens = 0;
-        airdrop_account.whitelisted = HashSet::new();
+        airdrop_account.start_time = start_time; //Airdrop start time
+        airdrop_account.end_time = start_time + duration; //Airdrop end time
+        airdrop_account.total_tokens = 200_000_000_000; //Total tokens allocated for airdrop
+        airdrop_account.distributed_tokens = 0; //Tokens already distributed to each user
+        airdrop_account.whitelisted = HashSet::new(); //User Token Accounts for recieveing airdrop tokens -- Pubkey
         Ok(())
     }
 
@@ -27,17 +27,21 @@ pub mod airdrop {
     pub fn distribute_airdrop(ctx: Context<DistributeAirdrop>) -> Result<()> {
         let airdrop_account = &mut ctx.accounts.airdrop_account;
         let clock = Clock::get()?;
-        
+
         if clock.unix_timestamp < airdrop_account.end_time {
             return Err(ErrorCode::AirdropNotEnded.into());
         }
 
-        if !airdrop_account.whitelisted.contains(&ctx.accounts.recipient.key()) {
+        if !airdrop_account
+            .whitelisted
+            .contains(&ctx.accounts.recipient.key())
+        {
             return Err(ErrorCode::NotWhitelisted.into());
         }
 
-        let tokens_per_user = airdrop_account.total_tokens / airdrop_account.whitelisted.len() as u64;
-        
+        let tokens_per_user =
+            airdrop_account.total_tokens / airdrop_account.whitelisted.len() as u64;
+
         token::transfer(
             CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
@@ -58,7 +62,8 @@ pub mod airdrop {
 //defines the struct for the context of the initialize instruction.
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, payer = authority, space = 8 + 16 + 16 + 16 + 16 + 32 * 1000)] // Adjust space as needed
+    #[account(init, payer = authority, space = 8 + 16 + 16 + 16 + 16 + 32 * 1000)]
+    // Adjust space as needed
     pub airdrop_account: Account<'info, AirdropAccount>,
     #[account(mut)]
     pub authority: Signer<'info>,

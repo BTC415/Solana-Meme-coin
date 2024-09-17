@@ -3,32 +3,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount, Mint};
 
-#[account]
-pub struct FundAccount {
-    pub total_allocated: u64,
-    pub total_released: u64,
-    pub vesting_start_time: i64,
-}
-
-#[derive(Accounts)]
-pub struct AllocateTokens<'info> {
-    #[account(init, payer = authority, space = 8 + FundAccount::LEN)]
-    pub fund_account: Account<'info, FundAccount>,
-    #[account(mut)]
-    pub fund_token_account: Account<'info, TokenAccount>,
-    pub authority: Signer<'info>,
-    pub token_program: Program<'info, token::Token>,
-}
-
-#[derive(Accounts)]
-pub struct ReleaseTokens<'info> {
-    #[account(mut)]
-    pub fund_account: Account<'info, FundAccount>,
-    #[account(mut)]
-    pub recipient_token_account: Account<'info, TokenAccount>,
-    pub authority: Signer<'info>,
-    pub token_program: Program<'info, token::Token>,
-}
+declare_id!("YOUR_PROGRAM_ID"); // Replace with your program ID
 
 #[program]
 pub mod development_fund {
@@ -91,6 +66,33 @@ pub mod development_fund {
 
         Ok(())
     }
+}
+
+#[derive(Accounts)]
+pub struct AllocateTokens<'info> {
+    #[account(init, payer = authority, space = 8 + FundAccount::LEN)]
+    pub fund_account: Account<'info, FundAccount>,
+    #[account(mut)]
+    pub fund_token_account: Account<'info, TokenAccount>,
+    pub authority: Signer<'info>,
+    pub token_program: Program<'info, token::Token>,
+}
+
+#[derive(Accounts)]
+pub struct ReleaseTokens<'info> {
+    #[account(mut)]
+    pub fund_account: Account<'info, FundAccount>,
+    #[account(mut)]
+    pub recipient_token_account: Account<'info, TokenAccount>,
+    pub authority: Signer<'info>,
+    pub token_program: Program<'info, token::Token>,
+}
+
+#[account]
+pub struct FundAccount {
+    pub total_allocated: u64,
+    pub total_released: u64,
+    pub vesting_start_time: i64,
 }
 
 #[error_code]

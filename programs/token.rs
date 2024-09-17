@@ -8,62 +8,50 @@ pub mod token {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, total_supply: u64) -> Result<()> {
-        let token_account = &mut ctx.accounts.token_account;
-        token_account.total_supply = total_supply;
-        token_account.minted = 0;
-        Ok(())
-    }
+       let mint = &mut ctx.accounts.mint;
 
-    pub fn mint(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
-        let token_account = &mut ctx.accounts.token_account;
-        if token_account.minted + amount > token_account.total_supply {
-            return Err(ErrorCode::ExceedsTotalSupply.into());
+       //Ensure total supply is not zero
+        if total_supply == 0 {
+            return Err(ErrorCode::InvalidSupply.info());
         }
-        token_account.minted += amount;
-        token::mint_to(
-            CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                token::MintTo {
-                    mint: ctx.accounts.mint.to_account_info(),
-                    to: ctx.accounts.recipient.to_account_info(),
-                    authority: ctx.accounts.authority.to_account_info(),
-                },
-            ),
-            amount,
-        )?;
-        Ok(())
+
+       token::initialize_mint(
+        ctx.accounts.token_program.to_account_info(),
+        mint, 
+        &ctx.accounts.authority.key(),
+        None,
+        9, //Number of decimals
+       )?;
+
+       //Mint initial supply to the associated token account
+       let cpi_accounts = token::MintTo {
+        mint:mint.to_account_info(),
+        to:ctx.accounts.token_account.to_account_info(),
+        authority:ctx.accounts.authority.to_account_info(),
+       };
+       token:::mint_to(
+        ctx.accounts.token_program.to_account_info(),
+        cpi_accounts,
+        total_supply,
+       )?;
+
+       Ok(())
     }
 }
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, payer = authority, space = 8 + 16)]
+    #[account(init, payer = authority, space = 8 + Mint::LEN)]
+    pub mint:Account<'info, TokenAccount>,
+    #[account(init, payer = authority, space = 8 + TokenAccount::LEN)]
     pub token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
     pub authority: Signer<'info>,
+    pub token_program:Program<'info, Token>,
     pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct MintTokens<'info> {
-    #[account(mut)]
-    pub token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub recipient: Account<'info, TokenAccount>,
-    pub authority: Signer<'info>,
-    pub token_program: Program<'info, Token>,
-}
-
-#[account]
-pub struct TokenAccount {
-    pub total_supply: u64,
-    pub minted: u64,
 }
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Minting would exceed total supply")]
-    ExceedsTotalSupply,
+    #[msg("Invalid total supply provided.")]
+    InvalidSupply,
 }

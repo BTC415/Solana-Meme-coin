@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, Mint, TokenAccount};
+use anchor_spl::token::{self, Mint, Token, TokenAccount};
 
 #[program]
 pub mod presale {
@@ -7,6 +7,11 @@ pub mod presale {
 
     pub fn buy_tokens(ctx: Context<BuyTokens>, amount: u64) -> Result<()> {
         let presale_account = &mut ctx.accounts.presale_account;
+
+        // Ensure that the amount requested is greater than zero
+        if amount == 0 {
+            return Err(ErrorCode::InvalidAmount.into());
+        }
 
         // Determine the price based on the amount being purchased
         let price_per_token = if presale_account.total_sold < 50_000_000_000 {
@@ -19,16 +24,15 @@ pub mod presale {
             return Err(ErrorCode::PresaleEnded.into());
         };
 
-        // Ensure that the amount requested is greater than zero
-        if amount == 0 {
-            return Err(ErrorCode::InvalidAmount.into());
+        // Calculate total cost in lamports (1 SOL = 1_000_000_000 lamports)
+        let total_cost = (amount as f64 * price_per_token * 1_000_000_000.0) as u64;
+
+        //Check if buyer has sent enough SOL
+        let buyer_balance = ctx.accounts.authority.lamports();
+        if buyer_balance < total_cost {
+            return Err(ErrorCode::InsufficientFunds.info());
         }
 
-        // Calculate total cost in lamports (1 SOL = 1_000_000_000 lamports)
-        let total_cost = (amount as f64 * price_per_token) * 1_000_000_000.0;
-
-        // Ensure that the buyer has sent enough SOL (this check should be performed on client-side)
-        
         // Mint tokens to buyer's account
         let cpi_accounts = token::MintTo {
             mint: ctx.accounts.mint.to_account_info(),
@@ -42,8 +46,11 @@ pub mod presale {
             amount,
         )?;
 
-        // Update total sold
-        presale_account.total_sold += amount;
+        // Update total sold safely
+        presale_account.total_sold = presale_account
+            .total_sold
+            .checked_add(amount)
+            .ok_or(ErrorCode::OverflowError)?;
 
         Ok(())
     }
@@ -71,4 +78,8 @@ pub enum ErrorCode {
     PresaleEnded,
     #[msg("Invalid amount provided for purchase.")]
     InvalidAmount,
-}
+    #[msg("Insufficient funds provided.")]
+    InsufficientFunds,
+    #[msg("Overflow occured when updating total sold.")]
+    OverflowError
+  }

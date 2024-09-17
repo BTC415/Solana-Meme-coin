@@ -7,7 +7,7 @@ declare_id!("YOUR_PROGRAM_ID"); // Replace with your program ID
 pub mod development_fund {
     use super::*;
 
-    const VESTING_PERIOD_MONTHS: u64 = 24;
+    const VESTING_PERIOD_MONTHS: u64 = 24; //2 years with linear vesting
     const TOKENS_PER_MONTH: u64 = 100_000_000_000 / VESTING_PERIOD_MONTHS; // 100 billion total
 
     pub fn allocate_tokens(ctx: Context<AllocateTokens>, amount: u64) -> Result<()> {

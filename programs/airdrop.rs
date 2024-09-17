@@ -55,6 +55,7 @@ pub mod airdrop {
     }
 }
 
+//defines the struct for the context of the initialize instruction.
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(init, payer = authority, space = 8 + 16 + 16 + 16 + 16 + 32 * 1000)] // Adjust space as needed
@@ -64,6 +65,7 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
+//defines the struct for the context of the whitelist instruction.
 #[derive(Accounts)]
 pub struct WhitelistUser<'info> {
     #[account(mut)]
@@ -71,6 +73,7 @@ pub struct WhitelistUser<'info> {
     pub user: Signer<'info>,
 }
 
+//defines the struct for the context of the distribute instruction.
 #[derive(Accounts)]
 pub struct DistributeAirdrop<'info> {
     #[account(mut)]
@@ -83,6 +86,7 @@ pub struct DistributeAirdrop<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+//Public on-chain account for airdrop
 #[account]
 pub struct AirdropAccount {
     pub start_time: i64,
@@ -92,6 +96,7 @@ pub struct AirdropAccount {
     pub whitelisted: HashSet<Pubkey>,
 }
 
+//Error code and message
 #[error_code]
 pub enum ErrorCode {
     #[msg("Airdrop has not ended yet")]

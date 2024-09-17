@@ -69,7 +69,6 @@ pub struct PresaleAccount {
 pub enum ErrorCode {
     #[msg("Presale has ended.")]
     PresaleEnded,
-
     #[msg("Invalid amount provided for purchase.")]
     InvalidAmount,
 }

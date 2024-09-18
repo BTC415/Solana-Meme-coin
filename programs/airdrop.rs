@@ -2,8 +2,6 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
 use std::collections::HashSet;
 
-declare_id!("YOUR_PROGRAM_ID");
-
 #[program]
 pub mod airdrop {
     use super::*;

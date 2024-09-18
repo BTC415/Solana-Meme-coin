@@ -13,9 +13,12 @@ pub mod token {
             return Err(error!(ErrorCode::InvalidSupply));
         }
 
+        //Token Program Account
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+
         //Create a new mint account
         token::initialize_mint(
-            ctx.accounts.token_program.to_account_info(), //Token Program Account
+            cpi_program, //Token Program Account
             mint,                                         //Mint account being initialized
             &ctx.accounts.authority.key(),                //Mint Authority
             None,                                         //Freeze Authority
@@ -29,12 +32,11 @@ pub mod token {
             authority: ctx.accounts.authority.to_account_info(), //Authority that has permission to mint
         };
 
+        //Instance of CpiContext
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
         //Actually mint the specified total supply of token to the token_account
-        token::mint_to(
-            ctx.accounts.token_program.to_account_info(), //Token Program Account
-            cpi_accounts,
-            total_supply,
-        )?;
+        token::mint_to(cpi_ctx, total_supply)?;
 
         Ok(())
     }

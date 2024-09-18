@@ -22,7 +22,7 @@ pub mod token {
             9,                                            //Number of decimals
         )?;
 
-        //Mint initial supply to the existing associated token account
+        //An instance of the MintTo struct
         let cpi_accounts = token::MintTo {
             mint: mint.to_account_info(),                        //Mint Account
             to: ctx.accounts.token_account.to_account_info(), //Destination Account where tokens will be sent

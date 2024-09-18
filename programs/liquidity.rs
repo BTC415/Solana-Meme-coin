@@ -1,8 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, TokenAccount};
 
-declare_id!("YOUR_PROGRAM_ID"); // Replace with your program ID
-
 #[account]
 pub struct LiquidityState {
     pub total_liquidity: u64,

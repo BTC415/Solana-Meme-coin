@@ -1,8 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount, Mint};
 
-declare_id!("YOUR_PROGRAM_ID"); // Replace with your program ID
-
 #[program]
 pub mod development_fund {
     use super::*;

@@ -30,7 +30,7 @@ pub mod presale {
         //Check if buyer has sent enough SOL
         let buyer_balance = ctx.accounts.authority.lamports();
         if buyer_balance < total_cost {
-            return Err(ErrorCode::InsufficientFunds.info());
+            return Err(ErrorCode::InsufficientFunds.into());
         }
 
         // Mint tokens to buyer's account

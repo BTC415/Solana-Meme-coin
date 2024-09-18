@@ -13,7 +13,7 @@ pub mod development_fund {
 
         // Ensure that the allocation amount is greater than zero
         if amount == 0 {
-            return Err(ErrorCode::InvalidAmount.into());
+            return Err(error!(ErrorCode::InvalidAmount));
         }
 
         fund_account.total_allocated = amount;
@@ -39,7 +39,7 @@ pub mod development_fund {
 
         // Ensure we do not exceed already released tokens
         if total_releasable <= fund_account.total_released {
-            return Err(ErrorCode::NoTokensAvailable.into());
+            return Err(error!(ErrorCode::NoTokensAvailable));
         }
 
         let amount_to_release = total_releasable - fund_account.total_released;

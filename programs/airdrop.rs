@@ -27,14 +27,14 @@ pub mod airdrop {
         let clock = Clock::get()?;
 
         if clock.unix_timestamp < airdrop_account.end_time {
-            return Err(ErrorCode::AirdropNotEnded.into());
+            return Err(error!(ErrorCode::AirdropNotEnded));
         }
 
         if !airdrop_account
             .whitelisted
             .contains(&ctx.accounts.recipient.key())
         {
-            return Err(ErrorCode::NotWhitelisted.into());
+            return Err(error!(ErrorCode::NotWhitelisted));
         }
 
         let tokens_per_user =

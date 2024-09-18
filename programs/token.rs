@@ -10,7 +10,7 @@ pub mod token {
 
        //Ensure total supply is not zero
         if total_supply == 0 {
-            return Err(ErrorCode::InvalidSupply.into());
+            return Err(error!(ErrorCode::InvalidSupply));
         }
 
        token::initialize_mint(

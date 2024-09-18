@@ -10,7 +10,7 @@ pub mod presale {
 
         // Ensure that the amount requested is greater than zero
         if amount == 0 {
-            return Err(ErrorCode::InvalidAmount.into());
+            return Err(error!(ErrorCode::InvalidAmount));
         }
 
         // Determine the price based on the amount being purchased
@@ -21,7 +21,7 @@ pub mod presale {
         } else if presale_account.total_sold < 150_000_000_000 {
             0.0003 // Price for last 50 billion tokens
         } else {
-            return Err(ErrorCode::PresaleEnded.into());
+            return Err(error!(ErrorCode::PresaleEnded));
         };
 
         // Calculate total cost in lamports (1 SOL = 1_000_000_000 lamports)
@@ -30,7 +30,7 @@ pub mod presale {
         //Check if buyer has sent enough SOL
         let buyer_balance = ctx.accounts.authority.lamports();
         if buyer_balance < total_cost {
-            return Err(ErrorCode::InsufficientFunds.into());
+            return Err(error!(ErrorCode::InsufficientFunds));
         }
 
         // Mint tokens to buyer's account

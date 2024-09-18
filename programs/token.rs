@@ -13,7 +13,7 @@ pub mod token {
             return Err(error!(ErrorCode::InvalidSupply));
         }
 
-        //Create a new mint
+        //Create a new mint account
         token::initialize_mint(
             ctx.accounts.token_program.to_account_info(), //Token Program Account
             mint,                                         //Mint account being initialized
@@ -22,7 +22,7 @@ pub mod token {
             9,                                            //Number of decimals
         )?;
 
-        //Mint initial supply to the associated token account
+        //Mint initial supply to the existing associated token account
         let cpi_accounts = token::MintTo {
             mint: mint.to_account_info(),                        //Mint Account
             to: ctx.accounts.token_account.to_account_info(), //Destination Account where tokens will be sent

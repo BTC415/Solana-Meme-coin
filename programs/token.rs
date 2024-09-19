@@ -21,7 +21,7 @@ pub mod token {
             cpi_program, //Token Program Account
             mint,                                         //Mint account being initialized
             &ctx.accounts.authority.key(),                //Mint Authority
-            None,                                         //Freeze Authority
+            None,                                         //Freeze Authority is set to None
             9,                                            //Number of decimals
         )?;
 
@@ -29,7 +29,7 @@ pub mod token {
         let cpi_accounts = token::MintTo {
             mint: mint.to_account_info(),                        //Mint Account
             to: ctx.accounts.token_account.to_account_info(), //Destination Account where tokens will be sent
-            authority: ctx.accounts.authority.to_account_info(), //Authority that has permission to mint
+            authority: ctx.accounts.authority.to_account_info(), //Mint Authority
         };
 
         //Instance of CpiContext
@@ -49,12 +49,12 @@ pub struct Initialize<'info> {
     #[account(init, payer = authority, space = 8 + Mint::LEN)]
     pub mint: Account<'info, Mint>,
 
-    //
+    //Token Account
     #[account(init, payer = authority, space = 8 + TokenAccount::LEN)]
     pub token_account: Account<'info, TokenAccount>,
     pub authority: Signer<'info>,
-    pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,    //Token Program Account
+    pub system_program: Program<'info, System>,  //System Program Account
 }
 
 #[error_code]

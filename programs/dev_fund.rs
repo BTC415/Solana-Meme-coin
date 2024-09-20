@@ -95,7 +95,6 @@ pub struct FundAccount {
 pub enum ErrorCode {
     #[msg("Invalid allocation amount provided.")]
     InvalidAmount,
-
     #[msg("No tokens available for release.")]
     NoTokensAvailable,
 }

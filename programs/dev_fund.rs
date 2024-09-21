@@ -28,7 +28,7 @@ pub mod development_fund {
 
         // Calculate how many months have passed since vesting started
         let current_time = Clock::get()?.unix_timestamp;
-        let elapsed_months = (current_time - fund_account.vesting_start_time) / 2_592_000; // seconds in a month
+        let elapsed_months = (current_time - fund_account.vesting_start_time) / (24 * 3_600 * 365); // seconds in a month
 
         // Ensure we do not release more than allocated
         if elapsed_months > VESTING_PERIOD_MONTHS {
@@ -95,6 +95,7 @@ pub struct FundAccount {
 pub enum ErrorCode {
     #[msg("Invalid allocation amount provided.")]
     InvalidAmount,
+
     #[msg("No tokens available for release.")]
     NoTokensAvailable,
 }
